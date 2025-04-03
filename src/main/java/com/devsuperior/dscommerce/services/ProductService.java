@@ -51,6 +51,11 @@ public class ProductService {
 		entity = repository.save(entity); 
 		return new ProductDTO(entity);
 	}
+	
+	@Transactional       
+	public void delete(Long id) { //deletar um produto
+		repository.deleteById(id);
+	}
 
 	private void copyDtoToEntity(ProductDTO dto, Product entity) { //método para não ficar repitindo esses daqui: entity.setName(dto.getName());
 		entity.setName(dto.getName()); //copiando os dados que vieram no dto para o entity
