@@ -19,6 +19,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.devsuperior.dscommerce.dto.ProductDTO;
 import com.devsuperior.dscommerce.services.ProductService;
 
+import jakarta.validation.Valid;
+
 @RestController //configurar para q quando a aplicação rodar, o que implementar nessa classe vai estar respondendo pela web
 @RequestMapping(value = "/products") //configura a rota
 public class ProductController {
@@ -39,7 +41,7 @@ public class ProductController {
 	}
 	
 	@PostMapping
-	public ResponseEntity<ProductDTO> insert(@RequestBody ProductDTO dto) { //vai inserir e salvar um novo produto, esse é o corpo da requisição
+	public ResponseEntity<ProductDTO> insert(@Valid @RequestBody ProductDTO dto) { //vai inserir e salvar um novo produto, esse é o corpo da requisição
 	   dto = service.insert(dto);
 	   URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}") //link do recurso criado
 			   .buildAndExpand(dto.getId()).toUri();
@@ -47,7 +49,7 @@ public class ProductController {
 	}
 	
 	@PutMapping(value = "/{id}") 
-	public ResponseEntity<ProductDTO> update(@PathVariable Long id, @RequestBody ProductDTO dto) { //atualizar um produto
+	public ResponseEntity<ProductDTO> update(@PathVariable Long id, @Valid @RequestBody ProductDTO dto) { //atualizar um produto
 	   dto = service.update(id, dto);
 	   return ResponseEntity.ok(dto); 
 	}
