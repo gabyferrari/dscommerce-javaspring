@@ -3,14 +3,20 @@ package com.devsuperior.dscommerce.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.devsuperior.dscommerce.dto.ProductDTO;
 import com.devsuperior.dscommerce.entities.Product;
 import com.devsuperior.dscommerce.repositories.ProductRepository;
+import com.devsuperior.dscommerce.services.exceptions.DataBaseException;
+import com.devsuperior.dscommerce.services.exceptions.ResourceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ProductService {
@@ -20,10 +26,10 @@ public class ProductService {
 	             
 	@Transactional(readOnly = true)       //metodo q vai receber de argumento um id e retornar um ProductDTO a apartir deese id
 	public ProductDTO findById(Long id) { //ele vai no banco de dados buscar o produto, converter para dto e retornar
-		Optional<Product> result = repository.findById(id); //buscar no banco o id e retornar para a variavel result
-		Product product = result.get(); //pega o objeto <Product> 
-		ProductDTO dto = new ProductDTO(product); //converte os dados dentro do product para dto
-		return dto;
+			Optional<Product> result = repository.findById(id); //buscar no banco o id e retornar para a variavel result
+			Product product = result.orElseThrow(() -> new ResourceNotFoundException("Recurso não encontrado")); //pega o objeto <Product> Com excessão
+			ProductDTO dto = new ProductDTO(product); //converte os dados dentro do product para dto
+			return dto;
 	}
 	
 	@Transactional(readOnly = true)       
@@ -44,17 +50,30 @@ public class ProductService {
 
 	@Transactional       
 	public ProductDTO update(Long id, ProductDTO dto) { //atualizar um produto
-		Product entity = repository.getReferenceById(id); //nao vai no banco de dados, só prepara um obj monitorado pela JPA
-		
-		copyDtoToEntity(dto, entity);
-		
-		entity = repository.save(entity); 
-		return new ProductDTO(entity);
+		try {
+			Product entity = repository.getReferenceById(id); //nao vai no banco de dados, só prepara um obj monitorado pela JPA
+			
+			copyDtoToEntity(dto, entity);
+			
+			entity = repository.save(entity); 
+			return new ProductDTO(entity);
+		}
+		catch (EntityNotFoundException e) { //exceção
+			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
 	}
 	
-	@Transactional       
+	@Transactional(propagation = Propagation.SUPPORTS) //SUPPORTS: só vai executar a transação se o método estiver no contexto de outra transação
 	public void delete(Long id) { //deletar um produto
-		repository.deleteById(id);
+		if (!repository.existsById(id)) {
+			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
+		try {
+			repository.deleteById(id);
+		}
+		catch (DataIntegrityViolationException e ) {
+			throw new DataBaseException("Falha de integridade referencial");
+		}
 	}
 
 	private void copyDtoToEntity(ProductDTO dto, Product entity) { //método para não ficar repitindo esses daqui: entity.setName(dto.getName());
