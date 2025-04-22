@@ -33,8 +33,8 @@ public class ProductService {
 	}
 	
 	@Transactional(readOnly = true)       
-	public Page<ProductDTO> findAll(Pageable pageable) { //vai buscar todos os produtos do banco de dados pageada(de 10 em 10 ou 12 em 12)
-		Page<Product> result = repository.findAll(pageable); //msm coisa q o de cima só q mais resumido
+	public Page<ProductDTO> findAll(String name, Pageable pageable) { //vai buscar todos os produtos do banco de dados pageada(de 10 em 10 ou 12 em 12)
+		Page<Product> result = repository.searchByName(name, pageable); //msm coisa q o de cima só q mais resumido
 		return result.map(x -> new ProductDTO(x));
 	}
 	
