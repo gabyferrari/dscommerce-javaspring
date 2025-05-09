@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import com.devsuperior.dscommerce.dto.CustomError;
 import com.devsuperior.dscommerce.dto.ValidationError;
 import com.devsuperior.dscommerce.services.exceptions.DataBaseException;
+import com.devsuperior.dscommerce.services.exceptions.ForbiddenException;
 import com.devsuperior.dscommerce.services.exceptions.ResourceNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +42,13 @@ public class ControllerExceptionHandler {
 		 for (FieldError f : e.getBindingResult().getFieldErrors()) { //vai percorrer todos os erros que estiverem na lista FieldErrors dando o apelido de f
 			 err.addError(f.getField(), f.getDefaultMessage());
 		 }
+		 return ResponseEntity.status(status).body(err);
+	 }
+	 
+	 @ExceptionHandler(ForbiddenException.class)
+	 public ResponseEntity<CustomError> forbidden(ForbiddenException e, HttpServletRequest request) {
+		 HttpStatus status = HttpStatus.FORBIDDEN; //erro 403, nao permite que um cliente sem ser admin acesse pedidos de outros clientes a nao ser o dela mesmo
+		 CustomError err = new CustomError(Instant.now(), status.value(), e.getMessage(), request.getRequestURI());
 		 return ResponseEntity.status(status).body(err);
 	 }
 }
